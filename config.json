@@ -8,7 +8,7 @@
         "https://vacancymail.co.zw/categories/ict-computer-jobs-in-zimbabwe/",
         "https://vacancymail.co.zw/categories/graduate-trainee-jobs-in-zimbabwe/"
       ],
-      "link_regex": "/jobs/[a-z0-9-]+-\\d+/?$"
+      "link_regex": "/jobs/.*-\\d+/?$"
     },
     {
       "name": "Classifieds.co.zw",
