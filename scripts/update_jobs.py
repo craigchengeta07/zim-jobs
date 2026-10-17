@@ -12,7 +12,10 @@ Runs once a day (see .github/workflows/daily.yml):
 5. Optionally sends a Telegram digest.
 
 Environment variables
-  ANTHROPIC_API_KEY   needed for the AI step (without it, a simple keyword fallback is used)
+  GEMINI_API_KEY      free Google AI key for the AI step (used first if set)
+  ANTHROPIC_API_KEY   Claude key for the AI step (used if no Gemini key)
+  GEMINI_MODEL        optional, defaults to gemini-2.5-flash
+  (with neither key, a simple keyword fallback is used)
   ANTHROPIC_MODEL     optional, defaults to claude-haiku-5-5
   TELEGRAM_BOT_TOKEN  optional
   TELEGRAM_CHAT_ID    optional (a user id, group id, or @channelname)
@@ -200,6 +203,31 @@ def analyse_with_ai(client, url, title, text):
     return clean_analysis(json.loads(out[start:end + 1]), title)
 
 
+def analyse_with_gemini(url, title, text):
+    key = os.environ["GEMINI_API_KEY"]
+    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    prompt = f"Today's date: {TODAY.isoformat()}\nAdvert URL: {url}\nPage title: {title}\n\nADVERT TEXT:\n{text}"
+    body = {
+        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0, "maxOutputTokens": 2048, "responseMimeType": "application/json"},
+    }
+    api = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    r = None
+    for attempt in range(4):
+        r = requests.post(api, headers={"x-goog-api-key": key, "Content-Type": "application/json"}, json=body, timeout=60)
+        if r.status_code == 429:  # free-tier speed limit: wait and try again
+            time.sleep(20 * (attempt + 1))
+            continue
+        break
+    if r.status_code != 200:
+        raise RuntimeError(f"Gemini HTTP {r.status_code}: {r.text[:250]}")
+    time.sleep(7)  # stay under the free tier's requests-per-minute limit
+    out = "".join(p.get("text", "") for p in r.json()["candidates"][0]["content"]["parts"])
+    start, end = out.find("{"), out.rfind("}")
+    return clean_analysis(json.loads(out[start:end + 1]), title)
+
+
 # ---------------------------------------------------------------- storage
 def load_json(path, default):
     try:
@@ -273,12 +301,16 @@ def main():
     jobs = [j for j in store.get("jobs", []) if is_open(j)]
     seen = load_json(SEEN_FILE, {})
 
-    client = None
-    if not dry and os.getenv("ANTHROPIC_API_KEY"):
+    client, provider = None, None
+    if not dry and os.getenv("GEMINI_API_KEY"):
+        provider = "gemini"
+    elif not dry and os.getenv("ANTHROPIC_API_KEY"):
         import anthropic
-        client = anthropic.Anthropic()
+        client, provider = anthropic.Anthropic(), "claude"
+    if provider:
+        log(f"AI step: {provider}")
     else:
-        log("No AI step (dry run or no ANTHROPIC_API_KEY): using keyword fallback.")
+        log("No AI step (dry run or no API key): using keyword fallback.")
 
     log(f"Collecting links ({TODAY})...")
     candidates = {}
@@ -299,9 +331,14 @@ def main():
             seen[url] = {"status": "skipped", "date": TODAY.isoformat()}
             continue
         try:
-            data = analyse_with_ai(client, url, title, text) if client else fallback_analysis(title, text)
+            if provider == "gemini":
+                data = analyse_with_gemini(url, title, text)
+            elif provider == "claude":
+                data = analyse_with_ai(client, url, title, text)
+            else:
+                data = fallback_analysis(title, text)
         except Exception as e:  # bad JSON, API hiccup, etc. -> retry tomorrow
-            log(f"  ! analysis failed for {url}: {e.__class__.__name__}")
+            log(f"  ! analysis failed for {url}: {e.__class__.__name__}: {str(e)[:300]}")
             continue
         status = "skipped"
         if data["relevant"]:
