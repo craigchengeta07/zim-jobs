@@ -46,7 +46,7 @@ SEEN_FILE = ROOT / "data" / "seen.json"
 CAT = timezone(timedelta(hours=2))  # Zimbabwe time
 TODAY = datetime.now(CAT).date()
 
-MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-5-5")
+model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 HEADERS = {"User-Agent": "ZimICTJobsBot/1.0 (student project; contact via repo owner)"}
 
 PROGRAMMES = [
