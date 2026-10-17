@@ -2,8 +2,8 @@ name: Update jobs daily
 
 on:
   schedule:
-    - cron: "0 4 * * *"
-  workflow_dispatch:
+    - cron: "0 4 * * *"   # 04:00 UTC = 06:00 Zimbabwe time (GitHub may start it a few minutes late)
+  workflow_dispatch:       # lets you run it by hand from the Actions tab
 
 permissions:
   contents: write
@@ -20,6 +20,7 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Find and analyse new jobs
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
