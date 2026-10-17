@@ -1,0 +1,30 @@
+{
+  "note": "Add or switch off job sites here. link_regex is matched against each link's URL path to pick out individual job adverts.",
+  "sources": [
+    {
+      "name": "Vacancy Mail",
+      "enabled": true,
+      "listing_urls": [
+        "https://vacancymail.co.zw/categories/ict-computer-jobs-in-zimbabwe/",
+        "https://vacancymail.co.zw/categories/graduate-trainee-jobs-in-zimbabwe/"
+      ],
+      "link_regex": "/jobs/[a-z0-9-]+-\\d+/?$"
+    },
+    {
+      "name": "Classifieds.co.zw",
+      "enabled": false,
+      "listing_urls": ["https://www.classifieds.co.zw/zimbabwe-it-telecoms-jobs"],
+      "link_regex": "CHANGE-ME: open the site, copy one job link, and write a regex for its path"
+    }
+  ],
+  "keywords": [
+    "software", "developer", "programmer", "web ", "mobile app", "devops", "full stack", "full-stack",
+    "ict", "information technology", "it officer", "it support", "it graduate", "it intern", "systems administrator",
+    "network", "helpdesk", "help desk", "database",
+    "cyber", "information security", "infosec", "security analyst", "security officer", "ict risk", "ict audit",
+    "computer science", "data analyst", "data scientist", "machine learning", "artificial intelligence",
+    "digital", "attache", "attachee"
+  ],
+  "max_new_per_run": 40,
+  "max_age_days_without_deadline": 45
+}

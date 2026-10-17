@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ICT graduate jobs in Zimbabwe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F7F4; --surface:#FFFFFF; --ink:#17261F; --muted:#5B6A62; --line:#D8DED8;
+  --green:#0E6B45; --green-ink:#FFFFFF; --amber:#B86E00; --amber-bg:#FFF1D6; --chip:#E7EEE9;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--paper:#101814;--surface:#16211B;--ink:#E8EFEA;--muted:#9AABA1;--line:#2A3A31;
+        --green:#3FBF86;--green-ink:#0B1A12;--amber:#F2B64B;--amber-bg:#3A2D10;--chip:#1F2E26}
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--body)}
+.wrap{max-width:880px;margin:0 auto;padding:40px 20px 80px}
+h1{font:700 clamp(1.9rem,5vw,2.8rem)/1.08 var(--display);letter-spacing:-.02em;margin:0 0 10px;max-width:16em}
+.lede{color:var(--muted);margin:0 0 28px;max-width:34em}
+.controls{display:grid;gap:12px;margin-bottom:8px}
+.controls input,.controls select{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);
+  border-radius:8px;padding:10px 12px;min-width:0}
+.row2{display:grid;grid-template-columns:1fr 190px 170px;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--chip);color:var(--ink);
+  padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--green-ink)}
+:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+.count{color:var(--muted);font-size:.92rem;margin:18px 0 0;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.job{display:grid;grid-template-columns:128px 1fr;gap:6px 22px;padding:22px 0;border-bottom:1px solid var(--line)}
+.when{font-size:.9rem;color:var(--muted)}
+.when strong{display:block;font:700 1.05rem/1.3 var(--display);color:var(--ink)}
+.when.soon strong{color:var(--amber)}
+.when.soon .tag{display:inline-block;background:var(--amber-bg);color:var(--amber);padding:1px 8px;border-radius:6px;
+  font-size:.8rem;font-weight:600;margin-top:4px}
+.job h2{font:700 1.25rem/1.25 var(--display);margin:0 0 2px}
+.org{color:var(--muted);margin:0 0 8px;font-size:.95rem}
+.sum{margin:0 0 10px;max-width:60ch}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;padding:0;list-style:none}
+.meta li{background:var(--chip);border-radius:6px;padding:2px 9px;font-size:.82rem}
+.req{margin:0 0 12px;padding-left:18px;color:var(--muted);font-size:.92rem}
+.apply{display:inline-block;background:var(--green);color:var(--green-ink);text-decoration:none;font-weight:600;
+  padding:8px 16px;border-radius:8px}
+.apply:hover{filter:brightness(1.08)}
+.how{display:block;color:var(--muted);font-size:.88rem;margin-top:8px}
+.empty{padding:48px 0;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font:700 1.2rem var(--display);margin-bottom:6px}
+footer{margin-top:36px;color:var(--muted);font-size:.85rem}
+@media (max-width:640px){
+  .row2{grid-template-columns:1fr}
+  .job{grid-template-columns:1fr}
+  .when strong{display:inline;margin-right:8px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>ICT graduate jobs in Zimbabwe</h1>
+  <p class="lede">For students and graduates in Software Engineering, Information Technology, Information Security and Assurance, and Computer Science. New adverts are collected and checked every morning at 06:00.</p>
+
+  <div class="controls">
+    <div class="chips" id="chips" role="group" aria-label="Filter by programme"></div>
+    <div class="row2">
+      <input id="q" type="search" placeholder="Search by job title, employer or skill" aria-label="Search jobs">
+      <select id="level" aria-label="Job level"><option value="">All levels</option></select>
+      <select id="sort" aria-label="Sort jobs">
+        <option value="deadline">Closing soonest</option>
+        <option value="new">Newest first</option>
+      </select>
+    </div>
+  </div>
+
+  <p class="count" id="count" aria-live="polite"></p>
+  <div id="list"></div>
+  <footer id="foot"></footer>
+</main>
+
+<script>
+const PROGRAMMES = ["Software Engineering","Information Technology","Information Security and Assurance","Computer Science"];
+const state = {jobs:[], prog:"", q:"", level:"", sort:"deadline"};
+const $ = id => document.getElementById(id);
+const today = new Date(); today.setHours(0,0,0,0);
+
+function el(tag, props, ...kids){
+  const n = document.createElement(tag);
+  Object.assign(n, props||{});
+  kids.flat().forEach(k => n.append(k));
+  return n;
+}
+function daysLeft(j){ return j.deadline ? Math.round((new Date(j.deadline+"T00:00:00") - today)/864e5) : null; }
+function whenBlock(j){
+  const d = daysLeft(j);
+  if(d === null) return el("div",{className:"when"}, el("strong",{textContent:"No deadline listed"}), "Check the advert");
+  const nice = new Date(j.deadline+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+  const rel = d===0 ? "today" : d===1 ? "tomorrow" : `in ${d} days`;
+  const box = el("div",{className:"when"+(d<=3?" soon":"")}, el("strong",{textContent:"Closes "+nice}), rel);
+  if(d<=3) box.append(el("div",{}, el("span",{className:"tag",textContent:"Closing soon"})));
+  return box;
+}
+function card(j){
+  const body = el("div",{});
+  body.append(el("h2",{textContent:j.title}));
+  const org = [j.employer, j.location].filter(Boolean).join(" · ");
+  if(org) body.append(el("p",{className:"org",textContent:org}));
+  if(j.summary) body.append(el("p",{className:"sum",textContent:j.summary}));
+  body.append(el("ul",{className:"meta"}, el("li",{textContent:j.level}), (j.programmes||[]).map(p=>el("li",{textContent:p}))));
+  if(j.requirements && j.requirements.length)
+    body.append(el("ul",{className:"req"}, j.requirements.map(r=>el("li",{textContent:r}))));
+  body.append(el("a",{className:"apply",href:j.url,target:"_blank",rel:"noopener",textContent:"View advert and apply"}));
+  if(j.how_to_apply) body.append(el("span",{className:"how",textContent:j.how_to_apply}));
+  return el("article",{className:"job"}, whenBlock(j), body);
+}
+function visible(){
+  const q = state.q.trim().toLowerCase();
+  let out = state.jobs.filter(j =>
+    (!state.prog || (j.programmes||[]).includes(state.prog)) &&
+    (!state.level || j.level === state.level) &&
+    (!q || [j.title,j.employer,j.summary,(j.requirements||[]).join(" ")].join(" ").toLowerCase().includes(q)));
+  out.sort(state.sort==="new"
+    ? (a,b)=> b.first_seen.localeCompare(a.first_seen)
+    : (a,b)=> (a.deadline||"9999").localeCompare(b.deadline||"9999"));
+  return out;
+}
+function render(){
+  const list = visible(), box = $("list");
+  box.replaceChildren();
+  $("count").textContent = list.length ? `${list.length} open job${list.length>1?"s":""}` : "";
+  if(!list.length){
+    box.append(el("div",{className:"empty"},
+      el("strong",{textContent: state.jobs.length ? "No jobs match these filters" : "No jobs yet"}),
+      state.jobs.length ? "Try a different programme or clear the search box." : "The first daily update has not run yet. Check back after 06:00."));
+    return;
+  }
+  list.forEach(j => box.append(card(j)));
+}
+function buildControls(){
+  const chips = $("chips");
+  ["", ...PROGRAMMES].forEach(p=>{
+    const b = el("button",{className:"chip",type:"button",textContent:p||"All programmes"});
+    b.setAttribute("aria-pressed", String(p===state.prog));
+    b.onclick = ()=>{ state.prog=p; [...chips.children].forEach(c=>c.setAttribute("aria-pressed", String(c===b))); render(); };
+    chips.append(b);
+  });
+  const levels = [...new Set(state.jobs.map(j=>j.level))].sort();
+  levels.forEach(l=>$("level").append(el("option",{value:l,textContent:l})));
+  $("q").oninput = e=>{state.q=e.target.value; render();};
+  $("level").onchange = e=>{state.level=e.target.value; render();};
+  $("sort").onchange = e=>{state.sort=e.target.value; render();};
+}
+fetch("jobs.json",{cache:"no-store"}).then(r=>r.json()).then(data=>{
+  state.jobs = (data.jobs||[]).filter(j => !j.deadline || daysLeft(j) >= 0);
+  buildControls(); render();
+  if(data.updated) $("foot").textContent = "Last updated " + new Date(data.updated).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"}) + ". Always confirm details on the employer's advert before applying.";
+}).catch(()=>{
+  buildControls();
+  $("list").append(el("div",{className:"empty"}, el("strong",{textContent:"Could not load jobs"}), "Refresh the page. If this keeps happening, the daily update may have failed."));
+});
+</script>
+</body>
+</html>
